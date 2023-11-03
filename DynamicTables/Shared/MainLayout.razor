@@ -1,0 +1,51 @@
+﻿@inherits LayoutComponentBase
+@inject Connection _conn
+
+<PageTitle>DynamicTables</PageTitle>
+
+<div class="page">
+    <div class="sidebar">        
+        <NavMenu Databases="@_conn.Databases"/>       
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
+        </div>
+
+        <article class="content px-4">
+            @Body        
+        </article>
+    </main>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    protected async override void OnInitialized()
+    {
+        var connStrings = new List<string>();
+
+        foreach(var conn in ConfigurationManager.ConnectionStrings)
+        {
+            connStrings.Add(conn.ToString());
+        }
+
+        _conn = new Connection();
+        _conn = _conn.InitConnection(connStrings); // change to take in conection string name
+
+        await Refresh();
+    }
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    async Task Refresh()
+    {
+        await InvokeAsync(() => { StateHasChanged(); });
+    }
+}

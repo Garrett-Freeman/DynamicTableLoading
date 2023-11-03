@@ -1,0 +1,68 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">DynamicTables</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+                <span aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+
+        @foreach (DynamicDatabase db in Databases)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="@($"/Databases/{db.Name}")" onclick="@(async () => Refresh() )"  Match="NavLinkMatch.All">
+                    <span aria-hidden="true"></span> @(db.Name)
+                </NavLink>
+            </div>
+
+
+            @foreach (DynamicSchema schema in db.Schemas)
+            {
+                <div class="nav-item px-4">
+                    <NavLink class="nav-link" Match="NavLinkMatch.All">
+                        <span aria-hidden="true"></span>  @($"{db.Name}.{schema.SchemaName}")
+                    </NavLink>
+                   
+                </div>
+
+                @foreach (DynamicTable table in schema.Tables)
+                {
+                    <div class="nav-item px-5">
+                        <NavLink class="nav-link" href="@($"Tables/{db.Name}/{schema.SchemaName}/{table.TableName}")" onclick="@(async () => Refresh() )" Match="NavLinkMatch.All">
+                            <span aria-hidden="true"></span> @table.TableName
+                        </NavLink>
+                    </div>
+                }
+            }
+        }
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    [Parameter]
+    public List<DynamicDatabase> Databases { get; set; }
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    
+
+    async Task Refresh()
+    {
+        await InvokeAsync(() => { StateHasChanged(); });
+    }
+}

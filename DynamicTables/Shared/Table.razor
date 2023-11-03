@@ -1,0 +1,35 @@
+﻿<table class="table">
+    <thead>
+        <tr>
+            @foreach (ColumnMetadata col in Source.Columns)
+            {
+                <th scope="col">@col.ColumnName</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (dynamic row in Source.Data)
+        {
+            <tr>
+                @foreach (ColumnMetadata col in Source.Columns)
+                {
+
+                    <td>@(GetColumnValue(col.ColumnName, row))</td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    [Parameter]
+    public DynamicTable Source { get; set; } = new();
+
+    string GetColumnValue(string columnName, dynamic row)
+    {
+
+        object val = ((IDictionary<string, object>)row)[columnName];
+
+        return Convert.ToString(val) ?? "";
+    }
+}

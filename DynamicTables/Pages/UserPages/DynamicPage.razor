@@ -1,0 +1,88 @@
+﻿@page "/Tables/{DatabaseName}/{SchemaName}/{TableName}"
+@inject Connection _conn
+
+
+<h3>@Table.TableName</h3>
+
+@if (!isLoading)
+{
+    <Table Source="@Table" />
+}
+else
+{
+    <span>Loading...</span>
+}
+
+
+@code {
+    [CascadingParameter(Name = "Databases")]
+    public List<DynamicDatabase> Databases { get; set; }
+
+    [Parameter]
+    public string DatabaseName { get; set; } = "";
+
+    [Parameter]
+    public string SchemaName { get; set; } = "";
+
+    [Parameter]
+    public string TableName { get; set; } = "";
+
+    private DynamicTable Table { get; set; } = new();
+
+    bool isLoading = true;
+    
+    public override async Task SetParametersAsync(ParameterView parameters)
+    {
+        if (parameters.TryGetValue<string>(nameof(DatabaseName), out var x))
+        {
+            if (x is not null)
+            {
+                DatabaseName = x;
+            }
+        }
+
+        if (parameters.TryGetValue<string>(nameof(SchemaName), out var y))
+        {
+            if (y is not null)
+            {
+                SchemaName = y;
+            }
+        }
+
+        if (parameters.TryGetValue<string>(nameof(TableName), out var z))
+        {
+            if (z is not null)
+            {
+                TableName = z;
+            }
+        }
+
+        await base.SetParametersAsync(parameters);
+    }
+
+    protected async override void OnParametersSet()
+    {
+        var db = _conn.Databases.FirstOrDefault(x => x.Name == DatabaseName);
+        var schema = db.Schemas.FirstOrDefault(x => x.SchemaName == SchemaName);
+        Table = schema.Tables.FirstOrDefault(x => x.TableName == TableName);
+
+        Table.Columns = await _conn.GetTableColumnMetadata(db.ConnectionString, schema.SchemaName, Table.TableName);
+        Table.Data = await _conn.GetTableData(db.ConnectionString, schema.SchemaName, Table.TableName, Table.Columns);
+
+        isLoading = false;
+        await Refresh();             
+    }
+
+    string GetColumnValue(string columnName, dynamic row)
+    {      
+
+        object val = ((IDictionary<string, object>)row)[columnName];
+
+        return Convert.ToString(val);
+    }
+
+    async Task Refresh()
+    {
+        await InvokeAsync(() => { StateHasChanged(); });
+    }
+}

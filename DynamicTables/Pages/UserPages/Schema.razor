@@ -1,0 +1,52 @@
+﻿@page "/Databases/{DatabaseName}"
+@inject IConnection _conn;
+
+<PageTitle>Schema</PageTitle>
+
+<h1>Database Overview</h1>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Table</th>
+      <th scope="col">Schema</th>
+    </tr>
+  </thead>
+  <tbody>
+        @foreach (DynamicSchema schema in Database.Schemas)
+        {
+            @foreach (DynamicTable table in schema.Tables)
+            {
+                <tr href="@($"/{Database.Name}/{schema.SchemaName}/{table.TableName}")">
+                    <td>@schema.SchemaName</td>
+                    <td>@table.TableName</td>
+                </tr>   
+            }
+        }
+    </tbody>
+</table>
+
+
+
+@code {
+
+    [Parameter]
+    public string DatabaseName { get; set; }
+
+    [CascadingParameter(Name = "Databases")]
+    public List<DynamicDatabase> Databases { get; set; }
+
+    public DynamicDatabase Database { get; set; } = new();
+
+    protected async override void OnInitialized()
+    {
+        Database = Databases.FirstOrDefault(x => x.Name == DatabaseName);
+
+        await Refresh();
+    }
+
+    async Task Refresh()
+    {
+        await InvokeAsync(() => { StateHasChanged(); });
+    }
+}
